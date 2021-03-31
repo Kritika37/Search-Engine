@@ -9,4 +9,4 @@ Made a search Engine from scratch named Hammer Search as CAPSTONE PROJECT for fi
 5. This fetched results from database
 
 
-Team Member: Parimal Prasoon
+Team Member: Parimal Prasoon <a href="https://github.com/Parimal7">
