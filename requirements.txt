@@ -1,3 +1,6 @@
 flask
 python-dotenv
 requests
+BeautifulSoup
+flask_paginate
+pymongo
