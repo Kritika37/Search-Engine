@@ -7,6 +7,7 @@ import pymongo
 import urllib.parse
 
 
+
 class Crawler():
     # connect to cloud mongo
     connect_uri = 'mongodb+srv://Kritika21:asdfghjkl@cluster0.x5ftg.mongodb.net/search-engine?retryWrites=true&w=majority'
@@ -83,8 +84,8 @@ class Crawler():
                 pass
         
         # close connection
-        client.close()
+        self.client.close()
 
 
 crawler = Crawler()
-crawler.crawl('https://quotes.toscrape.com/', 1)
+crawler.crawl('https://quotes.toscrape.com/', 2)
