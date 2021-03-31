@@ -3,40 +3,88 @@
 import requests
 import json
 from bs4 import BeautifulSoup
+import pymongo
+import urllib.parse
 
 
-start_url = 'https://stackoverflow.com/'
+class Crawler():
+    # connect to cloud mongo
+    connect_uri = 'mongodb+srv://Kritika21:asdfghjkl@cluster0.x5ftg.mongodb.net/search-engine?retryWrites=true&w=majority'
+    client = pymongo.MongoClient(connect_uri)
+    
+    # create db client
+    db = client.test
 
-def crawl(url,depth):
+    # search results storage
+    search_results = []
 
-	response = requests.get(start_url)
-	content = BeautifulSoup(response.text,'lxml')
+    # crawl domain
+    def crawl(self, url, depth):
+        # try to perform HTTP GET request
+        try:
+            print('Crawling url: "%s" at depth: %d' % (url, depth))
+            response = requests.get(url, headers={'user-agent': 'code-monkey-search'})
+        
+        # return otherwise
+        except:
+            print('Failed to perform HTTP GET request on "%s"\n' % url)
+            return
+        
+        # parse page content
+        content = BeautifulSoup(response.text, 'lxml')
 
-	
-	title = content.find('title').text
-	description = content.find('p').text.strip().replace('\n', '')
+        # try to extract page title and description
+        try:
+            title = content.find('title').text
+            description = ''
+            
+            for tag in content.findAll():
+                if tag.name == 'p':
+                    description += tag.text.strip().replace('\n', '')
+        # return otherwise
+        except:
+            return
+        
+        # store the result structure
+        result = {
+            'url': url,
+            'title': title,
+            'description': description
+        }
+        
+        search_results = self.db.search_results
+        search_results.insert_one(result)
+        search_results.create_index([
+            ('url', pymongo.TEXT),
+            ('title', pymongo.TEXT),
+            ('description', pymongo.TEXT)
+        ], name='search_results', default_language='english')
+        
+        # store the result
+        #self.search_results.append(result)
+        
+        # return when depth is exhausted
+        if depth == 0:
+            return
 
-	result = {
-	      'url' : url,
-	      'title' : title,
-	      'description' : description
-	}
+        # extract all the available links on the page
+        links = content.findAll('a')
 
-	if depth == 0:
-		return result
+        # loop over links
+        for link in links:
+            # try to crawl links recursively
+            try:
+                # use only links starting with 'http'
+                if 'http' in link['href']:
+                    self.crawl(link['href'], depth - 1)
+            
+            # ignore internal links
+            except KeyError:
+                pass
+        
+        # close connection
+        client.close()
 
-	try:
-		links = content.findAll('a')
-	except:
-		return result
 
-	for link in links:
-		try:
-			print('following url: "%s"' % link['href'])
-		except KeyError:
-			pass
-
-	return result
-
-result = crawl(start_url,1)
-print(json.dumps(result,indent=2))
+crawler = Crawler()
+crawler.crawl('https://quotes.toscrape.com/', 1)
